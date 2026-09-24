@@ -18,7 +18,11 @@ def index():
 
 @app.route('/weather', methods=['POST'])
 def get_weather():
-    print(f"Request from IP: {request.remote_addr} | Data: {request.form}")
+    # Try to get the real IP from X-Forwarded-For header if behind a proxy
+    ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+    if ',' in ip:
+        ip = ip.split(',')[0].strip()
+    print(f"Request from IP: {ip} | Data: {request.form}")
     city = request.form.get('city')
     if not city:
         return render_template('index.html', error="Please enter a city name.")
