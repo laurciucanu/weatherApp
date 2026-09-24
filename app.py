@@ -18,6 +18,7 @@ def index():
 
 @app.route('/weather', methods=['POST'])
 def get_weather():
+    print(f"Request from IP: {request.remote_addr} | Data: {request.form}")
     city = request.form.get('city')
     if not city:
         return render_template('index.html', error="Please enter a city name.")
