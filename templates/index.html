@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather App</title>
+    <style>
+        body { font-family: Arial, sans-serif; display: flex; justify-content: center; padding-top: 50px; background-color: #f0f2f5; }
+        .container { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 600px; }
+        h1 { text-align: center; color: #333; }
+        form { display: flex; gap: 10px; margin-bottom: 20px; }
+        input { flex-grow: 1; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .result { padding: 15px; border-radius: 4px; background: #e9ecef; margin-bottom: 20px; }
+        .error { color: #721c24; background-color: #f8d7da; padding: 10px; border-radius: 4px; border: 1px solid #f5c6cb; }
+
+        .forecast-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .forecast-card {
+            background: #fff;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 0.8rem;
+        }
+        .outlook {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fff3cd;
+            border-left: 5px solid #ffeeba;
+            font-style: italic;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Weather App</h1>
+        <form action="/weather" method="POST">
+            <input type="text" name="city" placeholder="Enter city name..." required>
+            <button type="submit">Get Weather</button>
+        </form>
+
+        {% if error %}
+            <div class="error">{{ error }}</div>
+        {% endif %}
+
+        {% if weather %}
+            <div class="result">
+                <h2>{{ city_name }}, {{ weather.sys.country }}</h2>
+                <p><strong>Temperature:</strong> {{ weather.main.temp }}°C</p>
+                <p><strong>Condition:</strong> {{ weather.weather[0].description.capitalize() }}</p>
+                <p><strong>Humidity:</strong> {{ weather.main.humidity }}%</p>
+            </div>
+
+            <h3>7-Day Forecast</h3>
+            <div class="forecast-container">
+                {% for day in forecast %}
+                    <div class="forecast-card">
+                        <strong>Day {{ loop.index }}</strong><br>
+                        <img src="http://openweathermap.org/img/wn/{{ day.weather[0].icon }}.png" alt="icon"><br>
+                        {{ day.main.temp }}°C<br>
+                        {{ day.weather[0].main }}
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="outlook">
+                <strong>30-Day Outlook:</strong> {{ outlook }}
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>
