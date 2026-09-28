@@ -50,6 +50,10 @@
             right: 20px;
             display: flex;
             align-items: center;
+            gap: 10px;
+            color: var(--text-color);
+            font-size: 0.9rem;
+            font-weight: 500;
         }
         .theme-switch {
             display: inline-block;
@@ -150,6 +154,7 @@
 </head>
 <body>
     <div class="theme-switch-wrapper">
+        <span id="theme-label">Dark Mode</span>
         <label class="theme-switch" for="checkbox">
             <input type="checkbox" id="checkbox">
             <div class="slider"></div>
@@ -195,15 +200,18 @@
 
     <script>
         const toggleSwitch = document.querySelector('#checkbox');
+        const themeLabel = document.getElementById('theme-label');
         const body = document.body;
 
         function switchTheme(x) {
             if (x) {
                 body.classList.add('dark-mode');
                 localStorage.setItem('theme', 'dark');
+                themeLabel.textContent = 'Light Mode';
             } else {
                 body.classList.remove('dark-mode');
                 localStorage.setItem('theme', 'light');
+                themeLabel.textContent = 'Dark Mode';
             }
         }
 
@@ -221,10 +229,15 @@
             if (currentTheme === 'dark') {
                 body.classList.add('dark-mode');
                 toggleSwitch.checked = true;
+                themeLabel.textContent = 'Light Mode';
             } else {
                 body.classList.remove('dark-mode');
                 toggleSwitch.checked = false;
+                themeLabel.textContent = 'Dark Mode';
             }
+        } else {
+            // Default state if no preference is saved
+            themeLabel.textContent = 'Dark Mode';
         }
     </script>
 </body>
