@@ -195,7 +195,10 @@
             <div class="forecast-container">
                 {% for day in forecast %}
                     <div class="forecast-card">
-                        <strong id="day-label">{{ day.dt_txt.split(' ')[0] }}</strong><br>
+                        <strong id="day-label">
+                            {% set date_parts = day.dt_txt.split(' ')[0].split('-') %}
+                            {{ date_parts[2] }}-{{ date_parts[1] }}-{{ date_parts[0] }}
+                        </strong><br>
                         <img src="http://openweathermap.org/img/wn/{{ day.weather[0].icon }}.png" alt="icon"><br>
                         {{ day.main.temp }}°C<br>
                         {{ day.weather[0].main }}
