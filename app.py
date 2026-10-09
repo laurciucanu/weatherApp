@@ -1,4 +1,5 @@
 import os
+import math
 from flask import Flask, render_template, request
 import requests
 from dotenv import load_dotenv
@@ -11,6 +12,30 @@ app = Flask(__name__)
 API_KEY = os.getenv('OPENWEATHER_API_KEY')
 BASE_URL = "https://api.openweathermap.org/data/2.5/weather"
 FORECAST_URL = "https://api.openweathermap.org/data/2.5/forecast"
+
+def get_coords(city):
+    """Get latitude and longitude for a city using OWM Geocoding API."""
+    if not API_KEY:
+        return None
+    url = "http://api.openweathermap.org/geo/1.0/direct"
+    params = {'q': city, 'limit': 1, 'appid': API_KEY}
+    try:
+        response = requests.get(url, params=params)
+        data = response.json()
+        if data:
+            return data[0]['lat'], data[0]['lon'], data[0].get('name', city)
+    except Exception as e:
+        print(f"Geocoding error: {e}")
+    return None
+
+def calculate_distance(lat1, lon1, lat2, lon2):
+    """Calculate Haversine distance between two points in km."""
+    R = 6371  # Earth radius in km
+    phi1, phi2 = math.radians(lat1), math.radians(lat2)
+    dphi = math.radians(lat2 - lat1)
+    dlambda = math.radians(lon2 - lon1)
+    a = math.sin(dphi/2)**2 + math.cos(phi1)*math.cos(phi2)*math.sin(dlambda/2)**2
+    return 2 * R * math.atan2(math.sqrt(a), math.sqrt(1-a))
 
 @app.route('/')
 def index():
@@ -74,6 +99,87 @@ def get_weather():
 
     except requests.exceptions.RequestException as e:
         return render_template('index.html', error="Unable to connect to the weather service.")
+
+@app.route('/weather/v2', methods=['GET', 'POST'])
+def get_weather_v2():
+    city = request.form.get('city') or request.args.get('city')
+    days = int(request.form.get('days', request.args.get('days', 5)))
+
+    if not city:
+        return render_template('index_v2.html')
+
+    # 1. Geocoding
+    coords = get_coords(city)
+    if not coords:
+        return render_template('index_v2.html', error="City not found. Please check the spelling.")
+
+    lat, lon, city_name = coords
+
+    # 2. Current Weather (via Open-Meteo)
+    current_url = "https://api.open-meteo.com/v1/forecast"
+    current_params = {
+        'latitude': lat,
+        'longitude': lon,
+        'current': 'temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m',
+        'daily': 'sunrise,sunset',
+        'timezone': 'auto'
+    }
+    curr_res = requests.get(current_url, params=current_params).json()
+    current_data = curr_res.get('current', {})
+    daily_base = curr_res.get('daily', {})
+
+    # Sunrise/Sunset from daily (take index 0 for today)
+    sunrise = daily_base.get('sunrise', [''])[0]
+    sunset = daily_base.get('sunset', [''])[0]
+
+    # 3. Forecast (via Open-Meteo)
+    forecast_days = min(days, 16)
+    fore_params = {
+        'latitude': lat,
+        'longitude': lon,
+        'daily': 'temperature_2m_max,temperature_2m_min,weather_code,precipitation_sum',
+        'timezone': 'auto',
+        'forecast_days': forecast_days
+    }
+    fore_res = requests.get(current_url, params=fore_params).json()
+    daily = fore_res.get('daily', {})
+
+    forecast_list = []
+    if 'time' in daily:
+        for i in range(len(daily['time'])):
+            forecast_list.append({
+                'date': daily['time'][i],
+                'max': daily['temperature_2m_max'][i],
+                'min': daily['temperature_2m_min'][i],
+                'precip': daily['precipitation_sum'][i],
+                'code': daily['weather_code'][i]
+            })
+
+    # 4. Distance Calculation
+    user_lat, user_lon = 44.4268, 26.1025
+    distance = calculate_distance(user_lat, user_lon, lat, lon)
+
+    # 5. Google Maps URL
+    google_maps_url = f"https://www.google.com/maps/search/?api=1&query={city_name}"
+
+    # 6. Historical Records (Expanded)
+    historical = {
+        'record_high': {"val": "39.6°C", "date": "19 iulie 2007"},
+        'record_low': {"val": "-29.7°C", "date": "28 decembrie 1996"},
+        'avg_temp': "12.4°C"
+    }
+
+    return render_template('index_v2.html',
+                           weather=current_data,
+                           forecast=forecast_list,
+                           city_name=city_name,
+                           distance=round(distance, 1),
+                           google_maps_url=google_maps_url,
+                           historical=historical,
+                           sunrise=sunrise,
+                           sunset=sunset,
+                           days=days,
+                           city=city)
 
 if __name__ == '__main__':
     app.run(debug=True)
