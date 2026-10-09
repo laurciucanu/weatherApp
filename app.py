@@ -110,11 +110,14 @@ def get_weather_v2():
         return render_template('index_v2.html')
 
     # 1. Geocoding
+    print(f"DEBUG: Starting geocoding for city: {city}")
     coords = get_coords(city)
     if not coords:
+        print(f"DEBUG: Geocoding failed for {city}")
         return render_template('index_v2.html', error="City not found. Please check the spelling.")
 
     lat, lon, city_name = coords
+    print(f"DEBUG: Geocoding success: {city_name} (lat: {lat}, lon: {lon})")
 
     # 2. Current Weather (via Open-Meteo)
     current_url = "https://api.open-meteo.com/v1/forecast"
@@ -125,12 +128,15 @@ def get_weather_v2():
         'daily': 'sunrise,sunset',
         'timezone': 'auto'
     }
+    print(f"DEBUG: Calling Open-Meteo current weather API for {lat}, {lon}")
     try:
         curr_res_resp = requests.get(current_url, params=current_params, timeout=10)
+        print(f"DEBUG: Open-Meteo current response status: {curr_res_resp.status_code}")
         curr_res = curr_res_resp.json()
     except Exception as e:
-        print(f"Current weather API error: {e}")
+        print(f"DEBUG: Open-Meteo current API error: {e}")
         return render_template('index_v2.html', error="Unable to connect to weather service.")
+
     current_data = curr_res.get('current', {})
     daily_base = curr_res.get('daily', {})
 
@@ -147,12 +153,15 @@ def get_weather_v2():
         'timezone': 'auto',
         'forecast_days': forecast_days
     }
+    print(f"DEBUG: Calling Open-Meteo forecast API for {lat}, {lon}")
     try:
         fore_res_resp = requests.get(current_url, params=fore_params, timeout=10)
+        print(f"DEBUG: Open-Meteo forecast response status: {fore_res_resp.status_code}")
         fore_res = fore_res_resp.json()
     except Exception as e:
-        print(f"Forecast API error: {e}")
+        print(f"DEBUG: Open-Meteo forecast API error: {e}")
         return render_template('index_v2.html', error="Unable to connect to weather service.")
+
     daily = fore_res.get('daily', {})
 
     forecast_list = []
