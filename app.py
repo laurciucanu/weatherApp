@@ -20,7 +20,7 @@ def get_coords(city):
     url = "https://api.openweathermap.org/geo/1.0/direct"
     params = {'q': city, 'limit': 1, 'appid': API_KEY}
     try:
-        response = requests.get(url, params=params)
+        response = requests.get(url, params=params, timeout=10)
         data = response.json()
         if data:
             return data[0]['lat'], data[0]['lon'], data[0].get('name', city)
@@ -124,7 +124,12 @@ def get_weather_v2():
         'daily': 'sunrise,sunset',
         'timezone': 'auto'
     }
-    curr_res = requests.get(current_url, params=current_params).json()
+    try:
+        curr_res_resp = requests.get(current_url, params=current_params, timeout=10)
+        curr_res = curr_res_resp.json()
+    except Exception as e:
+        print(f"Current weather API error: {e}")
+        return render_template('index_v2.html', error="Unable to connect to weather service.")
     current_data = curr_res.get('current', {})
     daily_base = curr_res.get('daily', {})
 
@@ -141,7 +146,12 @@ def get_weather_v2():
         'timezone': 'auto',
         'forecast_days': forecast_days
     }
-    fore_res = requests.get(current_url, params=fore_params).json()
+    try:
+        fore_res_resp = requests.get(current_url, params=fore_params, timeout=10)
+        fore_res = fore_res_resp.json()
+    except Exception as e:
+        print(f"Forecast API error: {e}")
+        return render_template('index_v2.html', error="Unable to connect to weather service.")
     daily = fore_res.get('daily', {})
 
     forecast_list = []
