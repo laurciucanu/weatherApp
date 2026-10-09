@@ -16,6 +16,7 @@ FORECAST_URL = "https://api.openweathermap.org/data/2.5/forecast"
 def get_coords(city):
     """Get latitude and longitude for a city using OWM Geocoding API."""
     if not API_KEY:
+        print("DEBUG: OPENWEATHER_API_KEY is MISSING in environment variables")
         return None
     url = "https://api.openweathermap.org/geo/1.0/direct"
     params = {'q': city, 'limit': 1, 'appid': API_KEY}
