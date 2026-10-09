@@ -17,7 +17,7 @@ def get_coords(city):
     """Get latitude and longitude for a city using OWM Geocoding API."""
     if not API_KEY:
         return None
-    url = "http://api.openweathermap.org/geo/1.0/direct"
+    url = "https://api.openweathermap.org/geo/1.0/direct"
     params = {'q': city, 'limit': 1, 'appid': API_KEY}
     try:
         response = requests.get(url, params=params)
@@ -100,7 +100,7 @@ def get_weather():
     except requests.exceptions.RequestException as e:
         return render_template('index.html', error="Unable to connect to the weather service.")
 
-@app.route('/weather/v2', methods=['GET', 'POST'])
+@app.route('/v2', methods=['GET', 'POST'])
 def get_weather_v2():
     city = request.form.get('city') or request.args.get('city')
     days = int(request.form.get('days', request.args.get('days', 5)))
@@ -182,4 +182,5 @@ def get_weather_v2():
                            city=city)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)

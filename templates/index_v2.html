@@ -300,7 +300,7 @@
 <body>
     <div class="wrapper">
         <div class="search-bar">
-            <form method="POST" action="/weather/v2" style="display: flex; width: 100%; gap: 10px;">
+            <form method="POST" action="/v2" style="display: flex; width: 100%; gap: 10px;">
                 <input type="text" name="city" placeholder="Caută orașul..." value="{{ city if city else '' }}" required>
                 <button type="submit">Caută</button>
             </form>
@@ -364,7 +364,7 @@
                 <div class="forecast-header">
                     <h3>Prognoza</h3>
                     <div class="duration-toggles">
-                        <form method="GET" action="/weather/v2" style="display: flex; gap: 4px;">
+                        <form method="GET" action="/v2" style="display: flex; gap: 4px;">
                             <input type="hidden" name="city" value="{{ city }}">
                             <button type="submit" name="days" value="5" class="duration-btn {{ 'active' if days == 5 else '' }}">5 zile</button>
                             <button type="submit" name="days" value="15" class="duration-btn {{ 'active' if days == 15 else '' }}">15 zile</button>
