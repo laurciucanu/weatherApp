@@ -17,17 +17,19 @@ def get_coords(city):
     """Get latitude and longitude for a city using OWM Geocoding API."""
     if not API_KEY:
         print("DEBUG: OPENWEATHER_API_KEY is MISSING in environment variables")
-        return None
+        return None, "API_KEY_MISSING"
     url = "https://api.openweathermap.org/geo/1.0/direct"
     params = {'q': city, 'limit': 1, 'appid': API_KEY}
     try:
         response = requests.get(url, params=params, timeout=10)
+        if response.status_code == 401:
+            return None, "INVALID_API_KEY"
         data = response.json()
         if data:
-            return data[0]['lat'], data[0]['lon'], data[0].get('name', city)
+            return data[0]['lat'], data[0]['lon'], data[0].get('name', city), "SUCCESS"
     except Exception as e:
         print(f"Geocoding error: {e}")
-    return None
+    return None, "GEO_ERROR"
 
 def calculate_distance(lat1, lon1, lat2, lon2):
     """Calculate Haversine distance between two points in km."""
