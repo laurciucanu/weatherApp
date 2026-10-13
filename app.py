@@ -107,6 +107,8 @@ def get_weather():
 def get_weather_v2():
     city = request.form.get('city') or request.args.get('city')
     days = int(request.form.get('days', request.args.get('days', 5)))
+    # Open-Meteo free tier supports a maximum of 16 days
+    days = min(days, 16)
 
     if not city:
         return render_template('index_v2.html')
