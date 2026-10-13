@@ -282,19 +282,54 @@
             font-weight: 600;
         }
 
-        @media (max-width: 768px) {
-            .main-weather {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            .forecast-row {
-                grid-template-columns: 1fr 1fr;
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin-top: 20px;
+            padding: 10px 0;
+        }
+
+        .pagination-btn {
+            background: var(--card-bg);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .pagination-btn:hover:not(:disabled) {
+            background: var(--border-color);
+            border-color: var(--accent-blue);
+        }
+
+        .pagination-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            filter: grayscale(1);
+        }
+
+        #page-indicator {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            min-width: 100px;
+            text-align: center;
+        }
+
+        @media (max-width: 480px) {
+            .pagination-container {
                 gap: 10px;
             }
-            .forecast-row > *:nth-child(3), .forecast-row > *:nth-child(4) {
-                display: none;
+            .pagination-btn {
+                padding: 6px 12px;
+                font-size: 0.75rem;
             }
         }
+
     </style>
 </head>
 <body>
@@ -375,10 +410,10 @@
 
                 <div class="forecast-list">
                     {% for day in forecast %}
-                        <div class="forecast-row">
+                        <div class="forecast-row" data-index="{{ loop.index0 }}">
                             <div class="forecast-day">
-                                <strong>{{ day.date }}</strong>
-                                <span>9 oct.</span>
+                                <strong style="font-size: 1rem;">{{ day.date }}</strong>
+                                <span style="display: none;"></span>
                             </div>
                             <div class="forecast-condition">
                                 ☁️ Înnorat
@@ -402,8 +437,57 @@
                         </div>
                     {% endfor %}
                 </div>
+                <div class="pagination-container">
+                    <button id="prev-page" class="pagination-btn">Previous</button>
+                    <span id="page-indicator">Page 1 of 1</span>
+                    <button id="next-page" class="pagination-btn">Next</button>
+                </div>
             </section>
         {% endif %}
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const rows = document.querySelectorAll('.forecast-row');
+            const itemsPerPage = 10;
+            const totalPages = Math.ceil(rows.length / itemsPerPage);
+            let currentPage = 1;
+
+            const prevBtn = document.getElementById('prev-page');
+            const nextBtn = document.getElementById('next-page');
+            const pageIndicator = document.getElementById('page-indicator');
+
+            function updatePagination() {
+                rows.forEach((row, index) => {
+                    const start = (currentPage - 1) * itemsPerPage;
+                    const end = currentPage * itemsPerPage;
+                    if (index >= start && index < end) {
+                        row.style.display = 'grid';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                pageIndicator.textContent = `Page ${currentPage} of ${totalPages || 1}`;
+                prevBtn.disabled = (currentPage === 1);
+                nextBtn.disabled = (currentPage === totalPages || totalPages === 0);
+            }
+
+            prevBtn.addEventListener('click', function() {
+                if (currentPage > 1) {
+                    currentPage--;
+                    updatePagination();
+                }
+            });
+
+            nextBtn.addEventListener('click', function() {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    updatePagination();
+                }
+            });
+
+            updatePagination();
+        });
+    </script>
 </body>
 </html>
