@@ -17,19 +17,19 @@ def get_coords(city):
     """Get latitude and longitude for a city using OWM Geocoding API."""
     if not API_KEY:
         print("DEBUG: OPENWEATHER_API_KEY is MISSING in environment variables")
-        return None, "API_KEY_MISSING"
+        return None
     url = "https://api.openweathermap.org/geo/1.0/direct"
     params = {'q': city, 'limit': 1, 'appid': API_KEY}
     try:
         response = requests.get(url, params=params, timeout=10)
         if response.status_code == 401:
-            return None, "INVALID_API_KEY"
+            return None
         data = response.json()
         if data:
-            return data[0]['lat'], data[0]['lon'], data[0].get('name', city), "SUCCESS"
+            return data[0]['lat'], data[0]['lon'], data[0].get('name', city)
     except Exception as e:
         print(f"Geocoding error: {e}")
-    return None, "GEO_ERROR"
+    return None
 
 def calculate_distance(lat1, lon1, lat2, lon2):
     """Calculate Haversine distance between two points in km."""
@@ -113,10 +113,17 @@ def get_weather_v2():
 
     # 1. Geocoding
     print(f"DEBUG: Starting geocoding for city: {city}")
-    coords = get_coords(city)
+    try:
+        coords = get_coords(city)
+        print(f"DEBUG: get_coords result: {coords}")
+    except Exception as e:
+        print(f"DEBUG: Exception during get_coords: {e}")
+        coords = None
+
     if not coords:
-        print(f"DEBUG: Geocoding failed for {city}")
+        print(f"DEBUG: Geocoding failed or returned None for {city}")
         return render_template('index_v2.html', error="City not found. Please check the spelling.")
+
 
     lat, lon, city_name = coords
     print(f"DEBUG: Geocoding success: {city_name} (lat: {lat}, lon: {lon})")
@@ -130,14 +137,18 @@ def get_weather_v2():
         'daily': 'sunrise,sunset',
         'timezone': 'auto'
     }
-    print(f"DEBUG: Calling Open-Meteo current weather API for {lat}, {lon}")
+    print(f"DEBUG: Calling Open-Meteo current weather API for {lat}, {lon} with params: {current_params}")
     try:
         curr_res_resp = requests.get(current_url, params=current_params, timeout=10)
         print(f"DEBUG: Open-Meteo current response status: {curr_res_resp.status_code}")
+        if curr_res_resp.status_code != 200:
+            print(f"DEBUG: Open-Meteo current response body: {curr_res_resp.text}")
         curr_res = curr_res_resp.json()
+        print(f"DEBUG: Open-Meteo current data received: {curr_res}")
     except Exception as e:
         print(f"DEBUG: Open-Meteo current API error: {e}")
         return render_template('index_v2.html', error="Unable to connect to weather service.")
+
 
     current_data = curr_res.get('current', {})
     daily_base = curr_res.get('daily', {})
@@ -155,14 +166,18 @@ def get_weather_v2():
         'timezone': 'auto',
         'forecast_days': forecast_days
     }
-    print(f"DEBUG: Calling Open-Meteo forecast API for {lat}, {lon}")
+    print(f"DEBUG: Calling Open-Meteo forecast API for {lat}, {lon} with params: {fore_params}")
     try:
         fore_res_resp = requests.get(current_url, params=fore_params, timeout=10)
         print(f"DEBUG: Open-Meteo forecast response status: {fore_res_resp.status_code}")
+        if fore_res_resp.status_code != 200:
+            print(f"DEBUG: Open-Meteo forecast response body: {fore_res_resp.text}")
         fore_res = fore_res_resp.json()
+        print(f"DEBUG: Open-Meteo forecast data received: {fore_res}")
     except Exception as e:
         print(f"DEBUG: Open-Meteo forecast API error: {e}")
         return render_template('index_v2.html', error="Unable to connect to weather service.")
+
 
     daily = fore_res.get('daily', {})
 
